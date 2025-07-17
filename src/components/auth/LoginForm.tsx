@@ -3,6 +3,8 @@
 import { useState } from "react";
 import CardWrapper from "./CardWrapper";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   email: string;
@@ -21,6 +23,7 @@ const LoginForm = () => {
   const [errors, setErrors] = useState<ErrorData>({});
   const [isLoading, setIsloading] = useState<boolean>(false);
   const [isShowPassword, setIsShowPassword] = useState<boolean>(false);
+  const route = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     // Update the form data state with the input value
@@ -63,7 +66,25 @@ const LoginForm = () => {
       return;
     }
 
-    console.log(formData);
+    setIsloading(true);
+
+    try {
+      signIn("credentials", {
+        ...formData,
+        redirect: false,
+      }).then((response) => {
+        setIsloading(false);
+        if (response?.error) {
+          setErrors({ email: response.error });
+        } else {
+          route.push("/");
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      setIsloading(false);
+      setErrors({ email: "An unexpected error occurred. Please try again." });
+    }
   };
 
   return (
