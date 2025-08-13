@@ -3,6 +3,7 @@
 import { useState } from "react";
 import CardWrapper from "./CardWrapper";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   username: string;
@@ -19,6 +20,7 @@ interface ErrorData {
 }
 
 const RegisterForm = () => {
+  const route = useRouter();
   const [formData, setFormData] = useState<FormData>({
     username: "",
     email: "",
@@ -89,37 +91,55 @@ const RegisterForm = () => {
     }
 
     const { confirmPassword, ...dataToSubmit } = formData;
-    console.log("Form submitted successfully with data:", dataToSubmit);
+
+    try {
+      setIsLoading(true);
+      // Simulate a registration request
+      setTimeout(() => {
+        setIsLoading(false);
+        // Simulate successful registration
+        // Here you would typically send dataToSubmit to your API
+        console.log("Registration successful with data:", dataToSubmit);
+        // Redirect or show success message
+        route.push("/auth/login");
+      }, 2000);
+    } catch (error) {
+      console.error("Registration error:", error);
+      setIsLoading(false);
+      setErrors({ email: "An unexpected error occurred. Please try again." });
+    }
+
+    // console.log("Form submitted successfully with data:", dataToSubmit);
   };
 
   return (
     <CardWrapper
-      label="Create a new account"
       title="Register"
+      footerText="Already have an account?"
       backButtonHref="/auth/login"
-      backButtonLabel="Already have an account? Login here"
+      backButtonLabel="Login here"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         {/* Username field */}
         <div>
-          <label
+          {/* <label
             htmlFor="username"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Username
-          </label>
+          </label> */}
           <div className="relative">
-            <User
+            {/* <User
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
-            />
+            /> */}
             <input
               type="text"
               name="username"
               id="username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full pl-10 pr-12 py-3 text-black border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
               required
               placeholder="Enter your username"
             />
@@ -131,24 +151,24 @@ const RegisterForm = () => {
 
         {/* {Email Field} */}
         <div>
-          <label
+          {/* <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Email
-          </label>
+          </label> */}
           <div className="relative">
-            <Mail
+            {/* <Mail
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
-            />
+            /> */}
             <input
               type="email"
               name="email"
               id="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full pl-10 pr-12 py-3 text-black border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
               required
               placeholder="Enter your email address"
             />
@@ -160,17 +180,17 @@ const RegisterForm = () => {
 
         {/* Password field with visibility toggle */}
         <div>
-          <label
+          {/* <label
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Password
-          </label>
+          </label> */}
           <div className="relative">
-            <Lock
+            {/* <Lock
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
-            />
+            /> */}
             <input
               type={isShowPassword ? "text" : "password"}
               id="password"
@@ -178,7 +198,7 @@ const RegisterForm = () => {
               value={formData.password}
               onChange={handleChange}
               className={
-                "w-full pl-10 pr-12 py-3 text-black border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                "w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
               }
               placeholder="Create a strong password"
             />
@@ -197,26 +217,24 @@ const RegisterForm = () => {
 
         {/* Confirm Password field with visibility toggle */}
         <div>
-          <label
+          {/* <label
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Confirm Password:
-          </label>
+          </label> */}
           <div className="relative">
-            <Lock
+            {/* <Lock
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               size={20}
-            />
+            /> */}
             <input
               type={isShowConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               id="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className={`w-full pl-10 pr-12 py-3 text-black border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.password ? "border-red-500 bg-red-50" : "border-gray-300"
-              }`}
+              className="w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
               placeholder="Re-enter your password"
             />
             <button
@@ -233,12 +251,19 @@ const RegisterForm = () => {
             </p>
           )}
         </div>
-        <button
+        {/* <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
           disabled={isLoading}
         >
           Register
+        </button> */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full rounded-md bg-red-600 py-3 text-base font-semibold text-white shadow-md transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-80"
+        >
+          {isLoading ? "Register…" : "Register"}
         </button>
       </form>
     </CardWrapper>

@@ -5,33 +5,37 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import AuthHeader from "./AuthHeader";
 import AuthFooter from "./AuthFooter";
 
 interface CardWrapperProps {
-  label: string;
   title: string;
+  footerText: string;
   backButtonHref: string;
   backButtonLabel: string;
   children: React.ReactNode;
 }
 
 const CardWrapper = ({
-  label,
   title,
+  footerText,
   backButtonHref,
   backButtonLabel,
   children,
 }: CardWrapperProps) => {
   return (
-    <Card className="xl:w-1/4 md:w1/2 w-full shadow-md">
-      <CardHeader>
-        <AuthHeader label={label} title={title} />
+    <Card className="w-full max-w-md border-0 bg-black/70 text-white shadow-2xl backdrop-blur-md gap-4">
+      <CardHeader className="px-8 pt-4 pb-4">
+        <CardTitle className="text-3xl font-bold">{title}</CardTitle>
       </CardHeader>
-      <CardContent>{children}</CardContent>
-      <CardFooter>
-        <AuthFooter href={backButtonHref} label={backButtonLabel} />
+      <CardContent className="px-8 pb-4">{children}</CardContent>
+      <CardFooter className="px-8 pb-2 pt-4 text-neutral-300">
+        <AuthFooter
+          href={backButtonHref}
+          label={backButtonLabel}
+          footerText={footerText}
+        />
       </CardFooter>
     </Card>
   );

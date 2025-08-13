@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import Schedule from "@/components/movie/Schedule";
 
 //Server Side Request for anime details
 async function getAnimeData() {
@@ -144,7 +145,9 @@ const MoviePage = async () => {
         </div>
       </div>
 
-      <Accordion
+      <Schedule />
+
+      {/* <Accordion
         type="single"
         collapsible
         className="w-full"
@@ -183,7 +186,7 @@ const MoviePage = async () => {
             </Button>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </Accordion> */}
     </div>
   );
 };
