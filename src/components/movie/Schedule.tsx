@@ -425,7 +425,7 @@
 
 "use client";
 import React, { useMemo, useRef, useState } from "react";
-
+import { useRouter } from "next/navigation";
 /**
  * Screenshot-styled schedule list, but keeping the same dark color palette.
  * - Title bar with right-side note
@@ -434,13 +434,12 @@ import React, { useMemo, useRef, useState } from "react";
  * - Show time pills with thin borders
  */
 
-type Showtime = { id: string; time: string; screen: string; fmt: string };
+type Showtime = { id: string; time: string; studio: string; format: string };
 
 type MovieSchedule = {
   id: string;
-  title: string;
-  genre: string;
-  durationMin: number;
+  theatre: string;
+  address: string;
   entries: Showtime[];
 };
 
@@ -467,10 +466,11 @@ function weekdayShort(d: Date) {
 }
 
 export default function ShowtimesStyled() {
+  const router = useRouter();
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [selection, setSelection] = useState<{
-    movie?: string;
+    theatre?: string;
     fmt?: string;
     screen?: string;
     time?: string;
@@ -483,41 +483,35 @@ export default function ShowtimesStyled() {
       [k0]: [
         {
           id: "a",
-          title: "BEC",
-          genre: "DRAMA",
-          durationMin: 119,
+          theatre: "BEC XIX",
+          address:
+            "Jl. Purnawarman 13-15 Gedung Bec Lama Lt Lg Blok A 02, Kota Bandung, Jawa Barat 40117",
           entries: [
-            { id: "1", time: "11:00", screen: "Satin 4", fmt: "2D" },
-            { id: "2", time: "13:25", screen: "Satin 4", fmt: "2D" },
-            { id: "3", time: "15:50", screen: "Satin 4", fmt: "2D" },
+            { id: "1", time: "11:30", studio: "Satin 4", format: "2D" },
+            { id: "2", time: "13:20", studio: "Satin 4", format: "2D" },
+            { id: "3", time: "15:40", studio: "Satin 4", format: "2D" },
           ],
         },
         {
           id: "b",
-          title: "WEAPONS",
-          genre: "HORROR",
-          durationMin: 128,
+          theatre: "BIP XIX",
+          address:
+            "Jl. Purnawarman 13-15 Gedung Bec Lama Lt Lg Blok A 02, Kota Bandung, Jawa Barat 40117",
           entries: [
-            { id: "4", time: "11:20", screen: "Audi 1", fmt: "2D" },
-            { id: "5", time: "13:55", screen: "Audi 1", fmt: "2D" },
-            { id: "6", time: "16:30", screen: "Audi 1", fmt: "2D" },
-            { id: "7", time: "19:05", screen: "Audi 1", fmt: "2D" },
-            { id: "8", time: "21:40", screen: "Audi 1", fmt: "2D" },
-            { id: "9", time: "18:15", screen: "Satin 4", fmt: "2D" },
-            { id: "10", time: "20:50", screen: "Satin 4", fmt: "2D" },
+            { id: "1", time: "11:30", studio: "Satin 4", format: "2D" },
+            { id: "2", time: "13:30", studio: "Satin 4", format: "2D" },
+            { id: "3", time: "15:55", studio: "Satin 4", format: "2D" },
           ],
         },
         {
           id: "c",
-          title: "PANGGIL AKU AYAH",
-          genre: "DRAMA",
-          durationMin: 120,
+          theatre: "TSM XIX",
+          address:
+            "Jl. Purnawarman 13-15 Gedung Bec Lama Lt Lg Blok A 02, Kota Bandung, Jawa Barat 40117",
           entries: [
-            { id: "11", time: "11:30", screen: "Audi 2", fmt: "2D" },
-            { id: "12", time: "13:55", screen: "Audi 2", fmt: "2D" },
-            { id: "13", time: "16:20", screen: "Audi 2", fmt: "2D" },
-            { id: "14", time: "18:45", screen: "Audi 2", fmt: "2D" },
-            { id: "15", time: "21:10", screen: "Audi 2", fmt: "2D" },
+            { id: "1", time: "11:00", studio: "Satin 4", format: "2D" },
+            { id: "2", time: "13:25", studio: "Satin 4", format: "2D" },
+            { id: "3", time: "15:50", studio: "Satin 4", format: "2D" },
           ],
         },
       ],
@@ -533,8 +527,20 @@ export default function ShowtimesStyled() {
     [selectedDate]
   );
 
+  function onPickSeats() {
+    if (!selection.theatre) return;
+    const params = new URLSearchParams({
+      date: selectedDate.toISOString(),
+      theatre: selection.theatre!,
+      fmt: selection.fmt!,
+      screen: selection.screen!,
+      time: selection.time!,
+    });
+    router.push(`/layout?${params.toString()}`);
+  }
+
   return (
-    <div className="mx-auto w-full max-w-5xl bg-neutral-950 p-4 text-neutral-100">
+    <div className="mx-auto w-full  bg-neutral-950 p-4 text-neutral-100">
       {/* Title row */}
       <div className="mb-3 flex items-end justify-between border-b border-neutral-700 pb-2">
         <h4 className="font-bold tracking-wider text-red-400">SCHEDULES</h4>
@@ -575,15 +581,12 @@ export default function ShowtimesStyled() {
             <div className="flex items-baseline justify-between border-b border-neutral-800 pb-3">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h3 className="text-lg font-extrabold tracking-wide">
-                  {m.title}
+                  {m.theatre}
                 </h3>
-                <span className="text-sm text-neutral-300">
-                  {m.genre} / {m.durationMin} Minutes
-                </span>
               </div>
               {/* right aligned latest screen label from entries */}
-              <div className="text-sm font-semibold text-neutral-200">
-                {m.entries[0]?.screen}
+              <div>
+                <span className="text-sm text-neutral-300">{m.address}</span>
               </div>
             </div>
 
@@ -591,7 +594,7 @@ export default function ShowtimesStyled() {
             <div className="mt-3 space-y-4">
               {Object.values(
                 m.entries.reduce<Record<string, Showtime[]>>((acc, cur) => {
-                  const k = `${cur.fmt}|${cur.screen}`;
+                  const k = `${cur.format}|${cur.studio}`;
                   (acc[k] ||= []).push(cur);
                   return acc;
                 }, {})
@@ -599,25 +602,25 @@ export default function ShowtimesStyled() {
                 <div key={i}>
                   <div className="mb-2 flex items-center gap-2 text-sm text-neutral-200">
                     <span className="text-lg leading-none">▸</span>
-                    <span className="font-medium">{group[0].fmt}</span>
+                    <span className="font-medium">{group[0].format}</span>
                     <span className="ml-2 text-neutral-400">
-                      {group[0].screen}
+                      {group[0].studio}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {group.map((s) => {
                       const active =
-                        selection.movie === m.title &&
+                        selection.theatre === m.theatre &&
                         selection.time === s.time &&
-                        selection.screen === s.screen;
+                        selection.screen === s.studio;
                       return (
                         <button
                           key={s.id}
                           onClick={() =>
                             setSelection({
-                              movie: m.title,
-                              fmt: s.fmt,
-                              screen: s.screen,
+                              theatre: m.theatre,
+                              fmt: s.format,
+                              screen: s.studio,
                               time: s.time,
                             })
                           }
@@ -653,13 +656,14 @@ export default function ShowtimesStyled() {
             })}
           </span>
           <br />
-          Movie: <span>{selection.movie ?? "-"}</span> | Class:{" "}
+          Theatre: <span>{selection.theatre ?? "-"}</span> | Class:{" "}
           <span>{selection.fmt ?? "-"}</span> | Time:{" "}
           <span>{selection.time ?? "-"}</span>
         </div>
         <button
-          disabled={!selection.movie}
+          disabled={!selection.theatre}
           className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onPickSeats}
         >
           PICK YOUR SEATS
         </button>

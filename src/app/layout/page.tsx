@@ -1,24 +1,57 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Clock, MapPin, Calendar } from "lucide-react";
 
-const MovieTheaterLayout = () => {
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+/** URL param types coming from /seats?date=...&theatre=... etc */
+type Params = {
+  date?: string;
+  theatre?: string;
+  format?: string;
+  studio?: string;
+  time?: string;
+};
+
+type Props = { searchParams: Params };
+
+/** Row letters and SeatId like "E8" */
+const rows = ["K", "J", "H", "G", "F", "E", "D", "C", "B", "A"] as const;
+type Row = (typeof rows)[number];
+type SeatId = `${Row}${number}`;
+
+/** Seat status map (only specify seats that are special) */
+type SeatState = "booked";
+type SeatStatusMap = Partial<Record<SeatId, SeatState>>;
+
+const MovieTheaterLayout = ({ searchParams }: Props) => {
+  const sp = useSearchParams();
+  const date = sp.get("date");
+  const theatre = sp.get("theatre");
+  const format = sp.get("format");
+  const studio = sp.get("studio");
+  const time = sp.get("time");
+
+  const formattedDay = new Date(date ?? "").toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  });
+
+  const [selectedSeats, setSelectedSeats] = useState<SeatId[]>([]);
 
   // Define seat layout - rows and columns
-  const rows = ["K", "J", "H", "G", "F", "E", "D", "C", "B", "A"];
-  const columns = Array.from({ length: 14 }, (_, i) => i + 1);
+  const columns: number[] = Array.from({ length: 14 }, (_, i) => i + 1);
 
   // Define seat statuses
-  const seatStatus = {
-    // E8: "booked",
-    // D4: "booked",
-    // D3: "booked",
-    // C3: "booked",
+  const seatStatus: SeatStatusMap = {
+    E8: "booked",
+    D4: "booked",
+    D3: "booked",
+    C3: "booked",
   };
 
-  const handleSeatClick = (seatId) => {
+  const handleSeatClick = (seatId: SeatId): void => {
     if (seatStatus[seatId] === "booked") return;
 
     setSelectedSeats((prev) =>
@@ -28,174 +61,188 @@ const MovieTheaterLayout = () => {
     );
   };
 
-  const getSeatClass = (seatId) => {
+  // DARK THEME palette (only colors changed)
+  const getSeatClass = (seatId: SeatId): string => {
     if (seatStatus[seatId] === "booked") {
-      return "bg-red-500 text-white cursor-not-allowed";
+      // booked = muted gray with no hover
+      return "bg-neutral-600 text-neutral-300 cursor-not-allowed border border-neutral-700";
     }
     if (selectedSeats.includes(seatId)) {
-      return "bg-blue-500 text-white cursor-pointer hover:bg-blue-600";
+      // selected = light on dark to pop
+      return "bg-red-700 cursor-pointer hover:bg-red-600 border border-red-600";
     }
-    return "bg-gray-200 text-gray-700 cursor-pointer hover:bg-gray-300";
+    // default = dark pill w/ subtle border, light text
+    return "bg-neutral-800 text-neutral-200 cursor-pointer hover:bg-neutral-700 border border-neutral-700";
   };
 
-  //   const formatTime = (time) => {
-  //     return new Date(`2025-08-15T${time}:00`).toLocaleTimeString("id-ID", {
-  //       hour: "2-digit",
-  //       minute: "2-digit",
-  //     });
-  //   };
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Seating Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
-          {/* Legend */}
-          <div className="mb-6 flex justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-200 rounded"></div>
-              <span>Tersedia</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-400 rounded"></div>
-              <span>Dibooking</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span>Terisi</span>
-            </div>
-          </div>
-
-          {/* Screen */}
-          <div className="mb-8">
-            <div className="bg-gradient-to-r from-gray-300 via-gray-400 to-gray-300 rounded-lg py-4 text-center text-gray-600 font-medium">
-              Area Layar
-              <div className="text-xs mt-1 opacity-75">Cinema XXI</div>
-            </div>
-          </div>
-
-          {/* Seats */}
-          <div className="space-y-3">
-            {rows.map((row) => (
-              <div key={row} className="flex justify-center items-center gap-2">
-                {/* Row label */}
-                <div className="w-8 text-center font-medium text-gray-600">
-                  {row}
-                </div>
-
-                {/* Left side seats */}
-                <div className="flex gap-1">
-                  {columns.slice(0, 7).map((col) => {
-                    const seatId = `${row}${col}`;
-                    return (
-                      <button
-                        key={seatId}
-                        onClick={() => handleSeatClick(seatId)}
-                        className={`w-8 h-8 rounded text-xs font-medium transition-colors ${getSeatClass(
-                          seatId
-                        )}`}
-                      >
-                        {seatId}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Aisle */}
-                <div className="w-8"></div>
-
-                {/* Right side seats */}
-                <div className="flex gap-1">
-                  {columns.slice(7).map((col) => {
-                    const seatId = `${row}${col}`;
-                    return (
-                      <button
-                        key={seatId}
-                        onClick={() => handleSeatClick(seatId)}
-                        className={`w-8 h-8 rounded text-xs font-medium transition-colors ${getSeatClass(
-                          seatId
-                        )}`}
-                      >
-                        {seatId}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Row label (right side) */}
-                <div className="w-8 text-center font-medium text-gray-600">
-                  {row}
-                </div>
+    <div className="min-h-screen w-full bg-black text-neutral-200">
+      <div className="mx-auto max-w-7xl p-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Seating Chart */}
+          <div className="lg:col-span-2 rounded-lg bg-neutral-900 p-6 shadow">
+            {/* Legend */}
+            <div className="mb-6 flex justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded border border-neutral-700 bg-neutral-800" />
+                <span className="text-neutral-300">Available</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Movie Info & Booking */}
-        <div className="space-y-6">
-          {/* Movie Poster & Info */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex gap-4 mb-4">
-              <div className="w-20 h-28 bg-gradient-to-br from-orange-400 via-red-500 to-yellow-600 rounded-lg flex items-center text-center justify-center text-white text-xs font-bold">
-                Central
-                <br />
-                Intelligence
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-neutral-600" />
+                <span className="text-neutral-300">Booked</span>
               </div>
-              <div className="flex-1">
-                <h2 className="font-bold text-lg mb-2">Central Intelligence</h2>
-                <div className="text-sm text-gray-600 mb-1">Cinema XXI</div>
-                <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                  <MapPin size={14} />
-                  BRAGA XXI Studio 2, Reguler 2D
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Calendar size={14} />
-                  Jumat, 15 Agustus 2025, 12:15
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-red-600" />
+                <span className="text-neutral-300">Selected</span>
               </div>
             </div>
-          </div>
 
-          {/* Time Selection */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock size={20} />
-              <span className="font-medium">12:15</span>
+            {/* Screen */}
+            <div className="mb-8">
+              <div className="rounded-lg bg-gradient-to-r from-neutral-700 via-neutral-600 to-neutral-700 py-4 text-center font-medium text-neutral-200">
+                Screen
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <div className="font-medium mb-2">Nomor kursi</div>
-                <div className="text-gray-600">
-                  {selectedSeats.length > 0
-                    ? selectedSeats.join(", ")
-                    : "Kamu belum pilih kursi"}
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="font-medium mb-2">
-                  {selectedSeats.length} kursi terpilih
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                  Hapus pilihan
-                </button>
-                <button
-                  className={`flex-1 py-3 px-4 rounded-lg text-white transition-colors ${
-                    selectedSeats.length > 0
-                      ? "bg-gray-800 hover:bg-gray-900"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
-                  disabled={selectedSeats.length === 0}
+            {/* Seats */}
+            <div className="space-y-3">
+              {rows.map((row) => (
+                <div
+                  key={row}
+                  className="flex items-center justify-center gap-2"
                 >
-                  Lanjut
-                </button>
+                  {/* Row label */}
+                  <div className="w-8 text-center font-medium text-neutral-400">
+                    {row}
+                  </div>
+
+                  {/* Left side seats */}
+                  <div className="flex gap-1">
+                    {columns.slice(0, 7).map((col) => {
+                      const seatId = `${row}${col}` as SeatId;
+                      return (
+                        <button
+                          key={seatId}
+                          onClick={() => handleSeatClick(seatId)}
+                          className={`h-8 w-8 rounded text-xs font-medium transition-colors ${getSeatClass(
+                            seatId
+                          )}`}
+                        >
+                          {seatId}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Aisle */}
+                  <div className="w-8" />
+
+                  {/* Right side seats */}
+                  <div className="flex gap-1">
+                    {columns.slice(7).map((col) => {
+                      const seatId = `${row}${col}` as SeatId;
+                      return (
+                        <button
+                          key={seatId}
+                          onClick={() => handleSeatClick(seatId)}
+                          className={`h-8 w-8 rounded text-xs font-medium transition-colors ${getSeatClass(
+                            seatId
+                          )}`}
+                        >
+                          {seatId}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Row label (right) */}
+                  <div className="w-8 text-center font-medium text-neutral-400">
+                    {row}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Movie Info & Booking */}
+          <div className="space-y-6">
+            {/* Movie Poster & Info */}
+            <div className="rounded-lg bg-neutral-900 p-6 shadow">
+              <div className="mb-4 flex gap-4">
+                <div className="flex h-28 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-neutral-700 via-neutral-600 to-neutral-700 text-center text-xs font-bold text-neutral-100">
+                  Central
+                  <br />
+                  Intelligence
+                </div>
+                <div className="flex-1">
+                  <h2 className="mb-2 text-lg font-bold text-white">
+                    Central Intelligence
+                  </h2>
+                  <div className="mb-1 text-sm text-neutral-400">
+                    Cinema XIX
+                  </div>
+                  <div className="mb-1 flex items-center gap-1 text-sm text-neutral-300">
+                    <MapPin size={14} />
+                    {theatre ?? "Cinema 1"}, {format ?? "Reguler"},{" "}
+                    {studio ?? "Studio 1"}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-neutral-300">
+                    <Calendar size={14} />
+                    {formattedDay} | {time ?? "-"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Time / Selection */}
+            <div className="rounded-lg bg-neutral-900 p-6 shadow">
+              <div className="mb-4 flex items-center gap-2 text-neutral-200">
+                <Clock size={20} />
+                <span className="font-medium">{time ?? "-"}</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="mb-2 font-medium text-white">
+                    Seat numbers
+                  </div>
+                  <div className="text-neutral-300">
+                    {selectedSeats.length > 0
+                      ? selectedSeats.join(", ")
+                      : "You haven’t selected any seats"}
+                  </div>
+                </div>
+
+                <div className="border-t border-neutral-800 pt-4">
+                  <div className="mb-2 font-medium text-neutral-200">
+                    {selectedSeats.length} seat(s) selected
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-lg border border-neutral-700 px-4 py-3 text-neutral-200 transition-colors hover:bg-neutral-800"
+                    onClick={() => setSelectedSeats([])}
+                  >
+                    Clear selection
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 rounded-lg px-4 py-3 text-white transition-colors ${
+                      selectedSeats.length > 0
+                        ? "bg-red-700 text-black hover:bg-red-600"
+                        : "bg-neutral-700 text-neutral-300 cursor-not-allowed"
+                    }`}
+                    disabled={selectedSeats.length === 0}
+                  >
+                    Continue
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+          {/* end right column */}
         </div>
       </div>
     </div>

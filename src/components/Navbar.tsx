@@ -1,6 +1,15 @@
-import { Search, Bell } from "lucide-react";
+"use client";
+
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { Bell, Menu, Search } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,87 +19,236 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "next-auth/react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-const Navbar = () => {
+const LINKS = [
+  { href: "/movies", label: "Browse" },
+  { href: "/#support", label: "Support" },
+  { href: "/#faq", label: "FAQ" },
+];
+
+export default function Navbar() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: session, status } = useSession();
+
+  const isAuthed = !!session;
+  const role = (session as any)?.user?.role as "USER" | "ADMIN" | undefined;
+
+  // --- search state ---
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    // clear search when route changes
+    setQ("");
+  }, [pathname]);
+
+  function onSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const query = q.trim();
+    router.push(
+      query ? `/movies?query=${encodeURIComponent(query)}` : "/movies"
+    );
+  }
+
+  // mobile drawer
+  const [open, setOpen] = useState(false);
+
   return (
-    <nav className="w-full flex items-center justify-between px-6 py-4 gap-10 bg-black/10 backdrop-blur-sm fixed z-10">
-      <div className="flex items-center space-x-8">
-        <Link href="#" className="text-xl font-bold text-white cursor-pointer">
+    <nav className="fixed inset-x-0 top-0 z-50 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30">
+      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-3">
+        {/* Mobile: hamburger */}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild className="lg:hidden">
+            <Button variant="ghost" size="icon" aria-label="Open menu">
+              <Menu className="h-5 w-5 text-white" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80">
+            <SheetHeader>
+              <SheetTitle>CinemaXIX</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 grid gap-2">
+              {LINKS.map((l) => (
+                <Button
+                  key={l.href}
+                  variant="ghost"
+                  asChild
+                  onClick={() => setOpen(false)}
+                >
+                  <Link href={l.href}>{l.label}</Link>
+                </Button>
+              ))}
+              <Separator className="my-2" />
+              {isAuthed ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/me">Dashboard</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/me/bookings">My Bookings</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/me/profile">Profile</Link>
+                  </Button>
+                  {role === "ADMIN" && (
+                    <Button
+                      variant="outline"
+                      asChild
+                      onClick={() => setOpen(false)}
+                    >
+                      <Link href="/admin">Admin</Link>
+                    </Button>
+                  )}
+                  <Separator className="my-2" />
+                  <Button
+                    variant="destructive"
+                    onClick={() => signOut({ callbackUrl: "/auth/login" })}
+                  >
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild onClick={() => setOpen(false)}>
+                    <Link href="/auth/login">Login</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    asChild
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/auth/register">Register</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Logo */}
+        <Link href="/" className="text-white font-semibold tracking-tight">
           CinemaXIX
         </Link>
-        <div className="flex text-[16px] space-x-6">
-          <Link
-            href="/movies"
-            className="text-gray-300 hover:text-[#E50914] transition-colors cursor-pointer"
-          >
-            Browse
-          </Link>
-          <Link
-            href="#"
-            className="text-gray-300 hover:text-[#E50914] transition-colors cursor-pointer"
-          >
-            Support
-          </Link>
-          <Link
-            href="#"
-            className="text-gray-300 hover:text-[#E50914] transition-colors cursor-pointer"
-          >
-            FAQ
-          </Link>
-        </div>
-      </div>
 
-      <div className="relative w-1/2">
-        <input
-          type="text"
-          placeholder="Search movies..."
-          className="w-full py-1 px-4 pl-10 text-[14px] text-gray-300 bg-gray-800/20 rounded-full ring-1 ring-white focus:outline-none focus:ring-1 focus:ring-[#E50914] focus:bg-gray-800 transition"
-        />
-        <Search
-          size={18}
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300"
-        />
-      </div>
-
-      <div className="flex items-center space-x-5">
-        <Bell className="w-5 h-5 cursor-pointer text-gray-300 hover:text-[#E50914] transition-colors" />
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden cursor-pointer hover:outline-3 hover:outline-[#E50914] duration-200 ease-in-out">
-              <img
-                src={
-                  session?.user
-                    ? session.user.picture
-                    : "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
-                }
-                alt="user-image"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="start">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>My Tickets</DropdownMenuItem>
-              <DropdownMenuItem>Wishlist</DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                signOut({ callbackUrl: "/auth/login" });
-              }}
+        {/* Desktop links */}
+        <div className="hidden lg:flex items-center gap-6 ml-6">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-sm text-gray-200 hover:text-[#E50914] transition-colors"
             >
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {l.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Search */}
+        <form
+          onSubmit={onSearchSubmit}
+          className="flex-1 max-w-xl relative ml-auto"
+        >
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search movies..."
+            aria-label="Search movies"
+            className="pl-9 bg-white/10 text-white placeholder:text-gray-300"
+          />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 pointer-events-none"
+            aria-hidden="true"
+          />
+        </form>
+
+        {/* Right actions */}
+        <div className="ml-3 flex items-center gap-2">
+          <Button variant="ghost" size="icon" aria-label="Notifications">
+            <Bell className="h-5 w-5 text-gray-200" />
+          </Button>
+
+          {/* Auth area */}
+          {status === "loading" ? (
+            <div
+              className="h-8 w-8 rounded-full bg-white/20 animate-pulse"
+              aria-hidden
+            />
+          ) : isAuthed ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-white/20 focus:outline-none focus:ring-[#E50914] transition"
+                  aria-label="Open account menu"
+                >
+                  <Image
+                    src={
+                      (session as any)?.user?.picture ||
+                      "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
+                    }
+                    alt="User avatar"
+                    width={32}
+                    height={32}
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="/me/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/me/bookings">My Tickets</Link>
+                  </DropdownMenuItem>
+                  {/* Optional: wishlist page */}
+                  {/* <DropdownMenuItem asChild><Link href="/me/wishlist">Wishlist</Link></DropdownMenuItem> */}
+                  {role === "ADMIN" && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">Admin</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: "/auth/login" })}
+                >
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden sm:flex items-center gap-2">
+              <Button asChild size="sm">
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/auth/register">Register</Link>
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
-};
-
-export default Navbar;
+}
