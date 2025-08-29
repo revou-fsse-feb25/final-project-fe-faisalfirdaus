@@ -4,6 +4,8 @@ import { useState } from "react";
 import CardWrapper from "./CardWrapper";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProviders";
+import { toast } from "sonner";
 
 interface FormData {
   username: string;
@@ -21,6 +23,8 @@ interface ErrorData {
 
 const RegisterForm = () => {
   const route = useRouter();
+  const { register: doRegister } = useAuth();
+
   const [formData, setFormData] = useState<FormData>({
     username: "",
     email: "",
@@ -34,18 +38,9 @@ const RegisterForm = () => {
     useState<boolean>(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    // Update the form data state with the input value
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-
-    // Clear the error for the field being changed
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: "",
-    }));
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
   };
 
   const validateForm = (): ErrorData => {
@@ -81,10 +76,10 @@ const RegisterForm = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const newErrors: ErrorData = validateForm();
 
+    const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -92,24 +87,27 @@ const RegisterForm = () => {
 
     const { confirmPassword, ...dataToSubmit } = formData;
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Simulate a registration request
-      setTimeout(() => {
-        setIsLoading(false);
-        // Simulate successful registration
-        // Here you would typically send dataToSubmit to your API
-        console.log("Registration successful with data:", dataToSubmit);
-        // Redirect or show success message
-        route.push("/auth/login");
-      }, 2000);
-    } catch (error) {
-      console.error("Registration error:", error);
-      setIsLoading(false);
-      setErrors({ email: "An unexpected error occurred. Please try again." });
-    }
+      // ⬇️ Use the same auth shape as navbar: register({ username, email, password, phone? })
+      await doRegister({
+        username: dataToSubmit.username,
+        email: dataToSubmit.email,
+        password: dataToSubmit.password,
+      });
 
-    // console.log("Form submitted successfully with data:", dataToSubmit);
+      toast.success("Account created — please log in");
+      route.push("/auth/login");
+    } catch (err: any) {
+      const message =
+        err?.message ||
+        err?.response?.data?.message ||
+        "Registration failed. Please try again.";
+      setErrors({ email: message });
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,19 +118,9 @@ const RegisterForm = () => {
       backButtonLabel="Login here"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {/* Username field */}
+        {/* Username */}
         <div>
-          {/* <label
-            htmlFor="username"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Username
-          </label> */}
           <div className="relative">
-            {/* <User
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
             <input
               type="text"
               name="username"
@@ -149,19 +137,9 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* {Email Field} */}
+        {/* Email */}
         <div>
-          {/* <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Email
-          </label> */}
           <div className="relative">
-            {/* <Mail
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
             <input
               type="email"
               name="email"
@@ -178,28 +156,16 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Password field with visibility toggle */}
+        {/* Password */}
         <div>
-          {/* <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label> */}
           <div className="relative">
-            {/* <Lock
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
             <input
               type={isShowPassword ? "text" : "password"}
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={
-                "w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
-              }
+              className="w-full rounded-md bg-neutral-700/80 px-4 py-3 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
               placeholder="Create a strong password"
             />
             <button
@@ -215,19 +181,9 @@ const RegisterForm = () => {
           )}
         </div>
 
-        {/* Confirm Password field with visibility toggle */}
+        {/* Confirm Password */}
         <div>
-          {/* <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Confirm Password:
-          </label> */}
           <div className="relative">
-            {/* <Lock
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
             <input
               type={isShowConfirmPassword ? "text" : "password"}
               name="confirmPassword"
@@ -251,13 +207,8 @@ const RegisterForm = () => {
             </p>
           )}
         </div>
-        {/* <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
-          disabled={isLoading}
-        >
-          Register
-        </button> */}
+
+        {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}

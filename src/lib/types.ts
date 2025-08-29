@@ -178,3 +178,11 @@ export interface ApiError {
   message: string;
   details?: unknown;
 }
+
+// ---- Me / Profile ----
+export type Me = LoginResponseDto["user"];
+
+export interface UpdateMeDto {
+  username?: string;
+  phone?: string | null;
+}

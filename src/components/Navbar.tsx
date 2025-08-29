@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { Bell, Menu, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +24,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+import { useAuth } from "@/providers/AuthProviders";
 
 const LINKS = [
   { href: "/movies", label: "Browse" },
@@ -36,28 +37,38 @@ const LINKS = [
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session, status } = useSession();
 
-  const isAuthed = !!session;
-  const role = (session as any)?.user?.role as "USER" | "ADMIN" | undefined;
+  const { me, ready, logout } = useAuth();
+  const isAuthenticated = !!me;
+  const isHydrating = !ready;
+  const role = me?.role as "USER" | "ADMIN" | undefined;
+
+  const initials =
+    me?.username?.slice(0, 1)?.toUpperCase() ||
+    me?.email?.slice(0, 1)?.toUpperCase() ||
+    "?";
 
   // --- search state ---
   const [q, setQ] = useState("");
   useEffect(() => {
-    // clear search when route changes
     setQ("");
   }, [pathname]);
 
   function onSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const query = q.trim();
-    router.push(
-      query ? `/movies?query=${encodeURIComponent(query)}` : "/movies"
-    );
+    router.push(query ? `/movies?q=${encodeURIComponent(query)}` : "/movies");
   }
 
-  // mobile drawer
   const [open, setOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.push("/auth/login");
+    }
+  };
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/30">
@@ -85,7 +96,7 @@ export default function Navbar() {
                 </Button>
               ))}
               <Separator className="my-2" />
-              {isAuthed ? (
+              {isAuthenticated ? (
                 <>
                   <Button
                     variant="ghost"
@@ -118,10 +129,7 @@ export default function Navbar() {
                     </Button>
                   )}
                   <Separator className="my-2" />
-                  <Button
-                    variant="destructive"
-                    onClick={() => signOut({ callbackUrl: "/auth/login" })}
-                  >
+                  <Button variant="destructive" onClick={handleLogout}>
                     Log out
                   </Button>
                 </>
@@ -186,28 +194,24 @@ export default function Navbar() {
           </Button>
 
           {/* Auth area */}
-          {status === "loading" ? (
+          {isHydrating ? (
             <div
               className="h-8 w-8 rounded-full bg-white/20 animate-pulse"
               aria-hidden
             />
-          ) : isAuthed ? (
+          ) : isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-white/20 focus:outline-none focus:ring-[#E50914] transition"
-                  aria-label="Open account menu"
+                <Button
+                  variant="ghost"
+                  className="p-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#E50914]"
                 >
-                  <Image
-                    src={
-                      (session as any)?.user?.picture ||
-                      "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
-                    }
-                    alt="User avatar"
-                    width={32}
-                    height={32}
-                  />
-                </button>
+                  <Avatar className="h-8 w-8 ring-1 ring-white/20">
+                    <AvatarFallback className="bg-[#1f2025] text-white text-sm">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -218,8 +222,6 @@ export default function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/me/bookings">My Tickets</Link>
                   </DropdownMenuItem>
-                  {/* Optional: wishlist page */}
-                  {/* <DropdownMenuItem asChild><Link href="/me/wishlist">Wishlist</Link></DropdownMenuItem> */}
                   {role === "ADMIN" && (
                     <>
                       <DropdownMenuSeparator />
@@ -230,9 +232,7 @@ export default function Navbar() {
                   )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: "/auth/login" })}
-                >
+                <DropdownMenuItem onClick={handleLogout}>
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

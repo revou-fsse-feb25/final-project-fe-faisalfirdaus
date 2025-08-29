@@ -3,19 +3,10 @@
 import CardWrapper from "./CardWrapper";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-// import { signIn } from "next-auth/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-// shadcn/ui
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// ⬇️ match the navbar’s provider path & API shape
+import { useAuth } from "@/providers/AuthProviders";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface FormData {
@@ -37,15 +28,15 @@ const LoginForm = () => {
   const [isShowPassword, setIsShowPassword] = useState<boolean>(false);
   const route = useRouter();
 
+  // ⬇️ useAuth now provides login(email, password)
+  const { login } = useAuth();
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    // Update the form data state with the input value
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
-
-    // Clear the error for the field being changed
     setErrors((prevErrors) => ({
       ...prevErrors,
       [name]: "",
@@ -69,47 +60,32 @@ const LoginForm = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: ErrorData = validateForm();
 
+    const newErrors: ErrorData = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
     setIsloading(true);
-
     try {
-      // Simulate a login request
-      setTimeout(() => {
-        setIsloading(false);
-        // Simulate successful login
-        route.push("/");
-      }, 2000);
-    } catch (error) {
-      console.error("Login error:", error);
-      setIsloading(false);
-      setErrors({ email: "An unexpected error occurred. Please try again." });
-    }
+      // ⬇️ call the simple login signature
+      await login(formData.email, formData.password);
 
-    // try {
-    //   signIn("credentials", {
-    //     ...formData,
-    //     redirect: false,
-    //   }).then((response) => {
-    //     setIsloading(false);
-    //     if (response?.error) {
-    //       setErrors({ email: response.error });
-    //     } else {
-    //       route.push("/");
-    //     }
-    //   });
-    // } catch (error) {
-    //   console.error("Login error:", error);
-    //   setIsloading(false);
-    //   setErrors({ email: "An unexpected error occurred. Please try again." });
-    // }
+      toast.success("Logged in successfully");
+      route.push("/");
+    } catch (err: any) {
+      const message =
+        err?.message ||
+        err?.response?.data?.message ||
+        "Invalid email or password";
+      setErrors({ email: message });
+      toast.error(message);
+    } finally {
+      setIsloading(false);
+    }
   };
 
   return (
@@ -120,19 +96,9 @@ const LoginForm = () => {
       backButtonLabel="Register here"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {/* {Email Field} */}
+        {/* Email */}
         <div>
-          {/* <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Email
-          </label> */}
           <div className="relative">
-            {/* <Mail
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
             <input
               type="email"
               name="email"
@@ -149,29 +115,17 @@ const LoginForm = () => {
           </div>
         </div>
 
-        {/* Password field with visibility toggle */}
+        {/* Password with visibility toggle */}
         <div>
-          {/* <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label> */}
           <div>
             <div className="relative">
-              {/* <Lock
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            /> */}
               <input
                 type={isShowPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={
-                  "w-full rounded-md bg-neutral-700/80 px-4 py-3 pr-11 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
-                }
+                className="w-full rounded-md bg-neutral-700/80 px-4 py-3 pr-11 text-base text-white placeholder-neutral-300 outline-none ring-1 ring-transparent transition focus:bg-neutral-700 focus:ring-white/20"
                 placeholder="Create a strong password"
               />
               <button
@@ -187,13 +141,8 @@ const LoginForm = () => {
             <p className="text-red-500 text-sm mt-1">{errors.password}</p>
           )}
         </div>
-        {/* <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
-          disabled={isLoading}
-        >
-          Login
-        </button> */}
+
+        {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}
