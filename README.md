@@ -82,7 +82,7 @@ cinema-xix/
 
 ## 🚀 Getting Started
 
-### 1. Clone & Install
+### Clone & Install
 
 ```bash
 git clone https://github.com/yourusername/cinema-xix.git
