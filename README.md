@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 Cinema XIX
 
-## Getting Started
+Cinema XIX is a modern online **movie booking web application**.  
+It lets users browse movies, see schedules, pick seats, book tickets, and pay securely — all in a sleek, responsive UI.
 
-First, run the development server:
+🔗 **Live Demo**: [final-project-fe-faisalfirdaus-3qt4dlqtj.vercel.app](https://final-project-fe-faisalfirdaus.vercel.app/)
+
+---
+
+## ✨ Features
+
+- **Authentication**
+
+  - User registration & login
+  - JWT access/refresh token handling
+  - Protected profile & bookings pages
+  - Admin role support
+
+- **Movies**
+
+  - Browse current & upcoming movies
+  - View details, genres, posters, and synopsis
+  - Search and filter
+
+- **Showtimes**
+
+  - Per-theater schedules with formats and studios
+  - Stylish date strip selector
+  - Grouped showtime pills
+  - Seat selection with live availability
+
+- **Bookings & Payments**
+
+  - Hold and confirm seat bookings
+  - Payment attempts and retry support
+  - Booking history under user profile
+
+- **Admin Panel**
+
+  - Manage movies, theaters, studios, showtimes
+  - Block seats
+  - Manage genres
+
+- **Modern UI**
+  - Responsive layout with **Next.js App Router**
+  - Styled with **TailwindCSS** + **shadcn/ui**
+  - Toast notifications via **sonner**
+  - Dark palette inspired by cinema themes
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: [Next.js 15](https://nextjs.org/), React, TypeScript
+- **UI**: TailwindCSS, shadcn/ui, lucide-react icons
+- **State/Forms**: React Hook Form + Zod
+- **Auth**: Context provider, JWT (access + refresh)
+- **Notifications**: sonner
+- **Backend API**: RESTful API (`/auth`, `/movies`, `/theaters`, `/bookings`, etc.)
+- **Deployment**: Railway (for backend), Vercel/Netlify (frontend)
+
+---
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cinema-xix/
+├─ app/ # Next.js app directory (pages, routes)
+│ ├─ auth/ # Login & register forms
+│ ├─ me/ # User profile & bookings
+│ ├─ admin/ # Admin dashboard
+│ ├─ movies/ # Movie listing & detail pages
+│ └─ theaters/ # Theater pages
+├─ components/ # Reusable UI + form components
+├─ providers/ # Auth context & hooks
+├─ lib/ # Zod schemas, utils, API client
+├─ public/ # Static assets
+└─ README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Clone & Install
 
-## Learn More
+```bash
+git clone https://github.com/yourusername/cinema-xix.git
 
-To learn more about Next.js, take a look at the following resources:
+cd cinema-xix
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+NEXT_PUBLIC_API_BASE_URL=https://final-project-be-faisalfirdaus-production.up.railway.app
 
-## Deploy on Vercel
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open `http://localhost:3000`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Authentication Flow
+
+- On login/register → receive `access_token` + `refresh_token`
+
+- Tokens are stored securely in localStorage
+
+- `authFetch` wrapper automatically attaches tokens and refreshes on 401
+
+- `useAuth` hook provides:
+
+  - `me`, `ready`, `login`, `register`, `logout`
+
+## 📸 Screenshots (example)
+
+### 🎬 Home Page
+
+![Home Page](public/screenshots/home-page.png)
+
+### 🎥 Movie Details Page
+
+![Movie Detail](public/screenshots/movie-detail.png)
+
+### 🕒 Showtime Schedule
+
+![Movie Detail](public/screenshots/schedule.png)

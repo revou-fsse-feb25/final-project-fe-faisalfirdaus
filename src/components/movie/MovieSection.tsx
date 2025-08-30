@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import MovieCard from "./MovieCard";
+import Link from "next/link";
 
 export type MovieStatus = "COMING_SOON" | "NOW_SHOWING" | "ARCHIVED";
 
@@ -80,9 +81,12 @@ const MovieSection: React.FC<MovieSectionProps> = ({ title }) => {
       <div className="py-5">
         <header className="flex justify-between items-end mb-3 text-white">
           <h2 className="text-[24px] font-medium">{title}</h2>
-          <a href="/movies" className="text-[16px] font-normal hover:underline">
+          <Link
+            href="/movies"
+            className="text-[16px] font-normal hover:underline"
+          >
             See all movies
-          </a>
+          </Link>
         </header>
 
         {isLoading && (

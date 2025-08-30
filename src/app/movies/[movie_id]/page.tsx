@@ -1,3 +1,11 @@
+// import React from "react";
+
+// const MovieId = () => {
+//   return <div>MovieId</div>;
+// };
+
+// export default MovieId;
+
 import Schedule from "@/components/movie/Schedule";
 import Navbar from "@/components/Navbar";
 
